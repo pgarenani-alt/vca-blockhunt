@@ -76,56 +76,43 @@ def fees(deposit, tvl, vol, fee_pct, days):
 
 # ------------------------------------------------------------------ questions
 Q = [
-    dict(id="q1", sec=0, kind="num", pts=100, ans=swap(1000, 2.5e6, 50_000)["eth_out"], unit="ETH",
-         prompt="Standard pool. You buy ETH with 50,000 USDC. How much ETH do you receive?",
+    # ---- Part 1 · The Swap
+    dict(id="q1", sec=0, kind="num", pts=200, ans=swap(1000, 2.5e6, 50_000)["eth_out"], unit="ETH",
+         prompt="Type 50,000 into the calculator. How much ETH do you get?",
+         hint="Read the box that says \"ETH you receive\".",
          key_txt="19.61 ETH",
-         why="k = 1,000 × 2,500,000 = 2.5 billion. The pool now holds 2,550,000 USDC, so ETH left = 2.5B ÷ 2.55M = 980.39. You receive 1,000 − 980.39 = 19.61 ETH."),
-    dict(id="q2", sec=0, kind="num", pts=100, ans=2.0, pct=True, unit="%",
-         prompt="Same trade. What is your slippage, in %?",
-         key_txt="2.0%",
-         why="Your average price is 50,000 ÷ 19.61 = $2,550 against $2,500 before the trade. 2,550 ÷ 2,500 − 1 = 2.0%. Shortcut: 50,000 ÷ 2,500,000 = 2%."),
-    dict(id="q3", sec=0, kind="mcq", pts=100, ans=1,
-         options=["Stays about the same", "Roughly doubles, to about 4%", "Roughly quadruples", "Roughly halves"],
-         prompt="Now double the trade to 100,000 USDC in the same pool. Your slippage...",
-         why="Slippage ≈ your trade ÷ the USDC in the pool. Double the trade, double the slippage: 100,000 ÷ 2,500,000 = 4%."),
-    dict(id="q4", sec=1, kind="num", pts=100, ans=0.4, pct=True, unit="%",
-         prompt="Switch to the deep pool. You buy ETH with 100,000 USDC. What is your slippage, in %?",
-         key_txt="0.4%",
-         why="100,000 ÷ 25,000,000 = 0.4%. Same trade as Monday's example, ten times the liquidity, one tenth the slippage."),
-    dict(id="q5", sec=1, kind="num", pts=75, ans=swap(1000, 2.5e6, 100_000)["p1"], unit="USDC",
-         prompt="Back in the standard pool, after a 100,000 USDC buy: what price (USDC per ETH) does the pool quote to the next trader?",
-         key_txt="$2,704",
-         why="The pool holds 2,600,000 USDC and 961.54 ETH. 2,600,000 ÷ 961.54 = $2,704. That is 8.2% above where it started: your price impact."),
-    dict(id="q6", sec=1, kind="mcq", pts=75, ans=0,
-         options=["Your trade is a much smaller fraction of what is in the pool",
-                  "Deep pools charge lower fees",
-                  "Arbitrage traders pay part of your bill",
-                  "The price comes from Coinbase instead of the formula"],
-         prompt="Why does the deep pool give you a better price?",
-         why="The formula is identical. Your 100,000 USDC is 4% of the standard pool's USDC but only 0.4% of the deep pool's, so it moves the ratio ten times less."),
-    dict(id="q7", sec=2, kind="num", pts=75, ans=abs(lp(1, 2)["il_pct"]), pct=True, absval=True, unit="%",
-         prompt="You LP and then ETH doubles (price change = 2). What is your impermanent loss, in %?",
+         why="19.61 ETH, not 50,000 ÷ 2,500 = 20. Your own trade pushed the price up as you bought."),
+    dict(id="q2", sec=0, kind="num", pts=150, ans=2.0, pct=True, unit="%",
+         prompt="Same trade. What slippage does it show?",
+         hint="Read the box that says \"Slippage\". Type it like 2 or 2%.",
+         key_txt="2%",
+         why="2%. You paid about $2,550 per ETH instead of $2,500 because your trade moved the price."),
+    dict(id="q3", sec=0, kind="num", pts=150, ans=0.2, pct=True, unit="%",
+         prompt="Now click \"Deep pool\" and keep 50,000. What slippage does it show now?",
+         hint="Same \"Slippage\" box.",
+         key_txt="0.2%",
+         why="0.2%, ten times less. A pool 10x bigger barely notices your trade."),
+    # ---- Part 2 · The LP
+    dict(id="q4", sec=1, kind="num", pts=200, ans=abs(lp(1, 2)["il_pct"]), pct=True, absval=True, unit="%",
+         prompt="Set Price change to 2 (ETH doubles). What % impermanent loss does it show?",
+         hint="The small % under \"Impermanent loss\". The minus sign is optional.",
          key_txt="5.7%",
-         why="Held: $7,500 per $5,000 deposited. In the pool: $7,071. 7,071 ÷ 7,500 − 1 = −5.7%. The deposit size does not matter; only how far the price moved."),
-    dict(id="q8", sec=2, kind="num", pts=75, ans=fees(10_000, 20e6, 4e6, 0.30, 60)["total"], unit="USD",
-         prompt="You LP $10,000 into a pool holding $20,000,000 that does $4,000,000 of trading a day at a 0.30% fee. Fees earned over 60 days, in dollars?",
-         key_txt="$360",
-         why="You own 10,000 ÷ 20,000,000 = 0.05% of the pool. The pool earns 4,000,000 × 0.30% = $12,000 a day, so you get $6 a day. × 60 days = $360."),
-    dict(id="q9", sec=2, kind="num", pts=75, ans=lp(10_000, 2)["il_usd"], absval=True, unit="USD",
-         prompt="Same $10,000 position. ETH doubles over those 60 days. Your impermanent loss, in dollars?",
-         key_txt="$858",
-         why="Held: $5,000 of ETH becomes $10,000, plus $5,000 USDC = $15,000. In the pool: $10,000 × √2 = $14,142. Difference: $858."),
-    dict(id="q10", sec=2, kind="mcq", pts=75, ans=1,
-         options=["Ahead: fees beat the loss", "Behind by about $500", "Exactly even", "Behind by about $860"],
-         prompt="So after those 60 days, compared with just holding the two tokens, the LP is...",
-         why="+$360 in fees − $858 of impermanent loss = about −$498. Fee income was outrun by impermanent loss, exactly like Monday's example."),
-    dict(id="q11", sec=3, kind="text", pts=150,
-         prompt="In one sentence: when is being an LP a good deal, and when is it not?",
+         why="5.7%. If ETH doubles, being in the pool leaves you 5.7% behind just holding."),
+    dict(id="q5", sec=1, kind="mcq", pts=150, ans=0,
+         options=["Lots of trading, and a price that barely moves",
+                  "Little trading, and a price that swings a lot"],
+         prompt="Which pool is the better deal for an LP?",
+         hint="More trading = more fees. Bigger price moves = more impermanent loss.",
+         why="Lots of trading brings fees, and a calm price keeps impermanent loss small."),
+    dict(id="q6", sec=1, kind="text", pts=150,
+         prompt="In one sentence: what is slippage OR impermanent loss?",
+         hint="Your own words. Any honest sentence gets full credit.",
          key_txt="(written)",
-         why="Model answer: when the fees you earn over the period are bigger than the impermanent loss, which means a lot of trading volume relative to the pool's size and a price that does not wander far from where you deposited. A big trending move makes it a bad deal."),
+         why="Example: slippage is paying a worse price because your own trade moves the pool's price."),
 ]
 QBY = {q["id"]: q for q in Q}
-SECTIONS = ["The Swap", "The Depth", "The LP", "One Line"]
+SECTIONS = ["The Swap", "The LP"]
+NS = len(SECTIONS)
 
 
 def esc(s):
@@ -163,9 +150,9 @@ def grade(q, raw):
         cands = [abs(c) for c in cands]
     ans = q["ans"]
     err = min(abs(c - ans) / abs(ans) for c in cands)
-    if err <= 0.015:
-        return q["pts"], "full"
     if err <= 0.03:
+        return q["pts"], "full"
+    if err <= 0.08:
         return q["pts"] // 2, "half"
     return 0, "wrong"
 
@@ -326,19 +313,8 @@ def show_results(d, sec):
 
 
 LESSONS = [
-    """**Key idea.** An AMM pool holds two tokens and follows one rule: ETH in the pool × USDC in the pool = k, and every trade must leave k where it was. The pool's price is just USDC ÷ ETH.
-
-**Monday's example.** Pool: 1,000 ETH and 2,500,000 USDC, so ETH costs $2,500. Put in 100,000 USDC: the pool now has 2,600,000 USDC, so ETH left = 2,500,000,000 ÷ 2,600,000 = 961.54. You get 38.46 ETH at an average of $2,600. Slippage 4.0%, price impact 8.2%.
-
-**Your turn.** Set the calculator to the numbers in each question and read the answer off it.""",
-    """**Key idea.** Your slippage is roughly your trade ÷ the USDC already sitting in the pool. Ten times the liquidity means about one tenth the slippage. That is the AMM's version of the bid-ask spread.
-
-**Your turn.** Use the pool switch on the calculator.""",
-    """**Key idea.** LPs earn a share of every trade's fee. But when ETH's price moves, arbitrage traders rebalance the pool against them. Impermanent loss = how much worse you did in the pool than if you had just held the two tokens.
-
-**Monday's example.** $5,000 in, ETH doubles. Just held: $7,500. In the pool: $7,071. Impermanent loss: $429 (5.7%). Fees in a $5M pool doing $1M a day at 0.30% for 90 days: $270. Net: $159 behind just holding.
-
-**Your turn.** The calculator starts on Monday's numbers. Change them to match each question.""",
+    """When you buy from a pool, your own trade pushes the price up. The extra you pay is **slippage**. Type into the calculator and read the answers off it.""",
+    """LPs earn a cut of every trade's fee, but when ETH's price moves they end up behind someone who just held. That gap is **impermanent loss**. Only change **Price change**.""",
 ]
 
 
@@ -347,8 +323,8 @@ def student_view():
     email = st.session_state.get("email")
     if not email:
         banner("DeFi Primitives · self-paced · 1,000 points")
-        st.markdown("Four short parts. Each one has a key idea, a calculator, and a few checks. "
-                    "Once you check a part it locks and shows you the reasoning.")
+        st.markdown("Two short parts, about 5 minutes. Every answer comes straight off the calculator. "
+                    "Once you check a part it locks and shows you the answer.")
         with st.form("login"):
             name = st.text_input("Your name (first and last)", key="name_in")
             em = st.text_input("Your Villanova email", key="email_in", placeholder="you@villanova.edu")
@@ -378,27 +354,26 @@ def student_view():
     if d["complete"]:
         st.success(f"Done. Score: {d['score']} / {TOTAL}  ·  In-session grade: {participation(d['score'])}")
         st.markdown("Keep this screen open if an officer asks to see it. **Kahoot is next.**")
-        for s_i in range(4):
+        for s_i in range(NS):
             with st.expander(f"Part {s_i + 1} · {SECTIONS[s_i]}"):
                 show_results(d, s_i)
         return
 
-    st.progress(sec / 4, text=f"Part {sec + 1} of 4 · {SECTIONS[sec]}")
+    st.progress(sec / NS, text=f"Part {sec + 1} of {NS} · {SECTIONS[sec]}")
     qs = [q for q in Q if q["sec"] == sec]
     answered = all(q["id"] in d["answers"] for q in qs)
 
-    if sec < 3:
-        st.markdown(esc(LESSONS[sec]))
-        if sec in (0, 1):
-            swap_calculator(f"s{sec}", default_pool=0)
-        else:
-            lp_calculator("s2")
+    st.markdown(esc(LESSONS[sec]))
+    if sec == 0:
+        swap_calculator("s0", default_pool=0)
+    else:
+        lp_calculator("s1")
 
     if answered:
         show_results(d, sec)
-        if st.button("Continue →" if sec < 3 else "Finish", type="primary", key=f"cont{sec}"):
+        if st.button("Continue →" if sec < NS - 1 else "Finish", type="primary", key=f"cont{sec}"):
             d["section"] = sec + 1
-            if sec == 3:
+            if sec == NS - 1:
                 d["complete"] = 1
             save(d)
             st.rerun()
@@ -416,6 +391,8 @@ def student_view():
                                         format_func=lambda j, q=q: q["options"][j], key=f"in_{q['id']}")
             else:
                 raw[q["id"]] = st.text_area(esc(label), key=f"in_{q['id']}", max_chars=400)
+            if q.get("hint"):
+                st.caption("💡 " + esc(q["hint"]))
         sub = st.form_submit_button("Check my answers (locks this part)", type="primary")
     if sub:
         missing = [q for q in qs if raw[q["id"]] is None or (isinstance(raw[q["id"]], str) and not raw[q["id"]].strip())]
@@ -426,14 +403,15 @@ def student_view():
         if bad:
             st.error("Numbers only in the number boxes (you can include $, commas or %).")
             return
-        if sec == 3 and len(raw["q11"].strip()) < 15:
+        txt = [q for q in qs if q["kind"] == "text"]
+        if txt and len(raw[txt[0]["id"]].strip()) < 15:
             st.error("Write a full sentence (at least 15 characters).")
             return
         for q in qs:
             pts, status = grade(q, raw[q["id"]])
             d["answers"][q["id"]] = dict(given=raw[q["id"]], pts=pts, status=status)
-        if sec == 3:
-            d["line"] = raw["q11"].strip()
+        if txt:
+            d["line"] = raw[txt[0]["id"]].strip()
         save(d)
         st.rerun()
 
@@ -465,7 +443,7 @@ def presenter_view():
         m3.metric("Average score", avg)
         st.markdown("**Leaderboard**")
         st.dataframe([{"#": i + 1, "Name": r["name"], "Score": r["score"],
-                       "Part": min(r["section"] + 1, 4), "Done": "✓" if r["complete"] else ""}
+                       "Part": min(r["section"] + 1, NS), "Done": "✓" if r["complete"] else ""}
                       for i, r in enumerate(rows[:15])], hide_index=True, width="stretch")
         st.markdown("**Per question** (re-teach anything under 60%)")
         stats = []
@@ -504,7 +482,7 @@ def presenter_view():
                + [q["id"] for q in Q] + ["last_update"])
     for r in rows:
         w.writerow([r["email"], r["name"], r["score"], participation(r["score"]), r["complete"],
-                    min(r["section"] + 1, 4), r.get("line", "")]
+                    min(r["section"] + 1, NS), r.get("line", "")]
                    + [r["answers"].get(q["id"], {}).get("pts", "") for q in Q]
                    + [time.strftime("%Y-%m-%d %H:%M", time.localtime(r["updated"]))])
     st.download_button("Download CSV for the gradebook", buf.getvalue().encode("utf-8"),
